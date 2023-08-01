@@ -22,8 +22,6 @@ dependencies {
     implementation 'org.json:json:20230618'
     implementation 'org.slf4j:slf4j-simple:1.7.30'
     implementation 'com.intellij:forms_rt:7.0.3'
-    implementation 'pxb.android:axml:2.0.0'
-
 }
 
 tasks.register('fatJar', Jar) {
