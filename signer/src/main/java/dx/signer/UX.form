@@ -113,7 +113,7 @@
                   <text value="输出apk/aab"/>
                 </properties>
               </component>
-              <component id="8a456" class="javax.swing.JCheckBox" binding="保存密码CheckBox" default-binding="true">
+              <component id="8a456" class="javax.swing.JCheckBox" binding="SaveCB">
                 <constraints>
                   <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>

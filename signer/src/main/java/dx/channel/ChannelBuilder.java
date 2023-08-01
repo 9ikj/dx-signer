@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -66,9 +67,8 @@ public class ChannelBuilder implements AutoCloseable {
         entries.sort(Comparator.comparing(FastZipEntry::utf8Name));
     }
 
-    public static void updateUM(Axml axml, String keyValue) throws IOException {
-        updateMeta(axml, "UMENG_CHANNEL", keyValue);
-        // updateMeta(axml, "CHANNEL", keyValue);
+    public static void updateUM(Axml axml,String channelKey, String keyValue) throws IOException {
+        updateMeta(axml, channelKey, keyValue);
     }
 
     private static void updateMeta(Axml axml, String keyName, String keyValue) {
@@ -108,17 +108,21 @@ public class ChannelBuilder implements AutoCloseable {
                 .collect(Collectors.toList());
     }
 
-    public void build(String channel, Path out) throws IOException {
+    public void build(LinkedHashMap<String,String> map, Path out) throws IOException {
         out = out.toAbsolutePath();
         Path parent = out.getParent();
         Files.createDirectories(parent);
         Path tmp = Files.createTempFile(parent, "tmp", ".apk");
         Files.deleteIfExists(out);
+        String channelValue = "";
         try {
             try (AxmlFastZipOut zout = new AxmlFastZipOut(tmp.toFile());) {
                 zout.initByAndroidManifestContent(axml);
                 zout.copyPart(in, entries);
-                updateUM(axml, channel);
+                for (String channelKey : map.keySet()) {
+                    channelValue = map.get(channelKey);
+                    updateUM(axml, channelKey, channelValue);
+                }
                 ByteBuffer bb = ByteBuffer.wrap(axml.toByteArray());
                 Source am = Source.newRawEntry("AndroidManifest.xml", bb);
                 zout.copyPart(am, am.entries());
@@ -127,7 +131,7 @@ public class ChannelBuilder implements AutoCloseable {
 
             ApkSigns.sign(tmp, out, this.key, false);
             try {
-                ChannelWriter.put(out.toFile(), channel);
+                ChannelWriter.put(out.toFile(), channelValue);
             } catch (SignatureNotFoundException e) {
                 throw new IOException(e);
             }

@@ -48,7 +48,7 @@ public class UX {
     private JTextField outPathTF;
     private JButton signBtn;
     private JTextArea loggingTA;
-    private JCheckBox 保存密码CheckBox;
+    private JCheckBox SaveCB;
     private JComboBox keyAliasCB;
     private JPasswordField keyPassPF;
     private JPasswordField ksPassPF;
@@ -207,7 +207,7 @@ public class UX {
             mConfig.put("out", this.outPathTF.getText());
             mConfig.put("channel-list", this.channelPathTF.getText());
 
-            if (保存密码CheckBox.isSelected()) {
+            if (SaveCB.isSelected()) {
                 mConfig.put("ks-pass", ksPass);
                 mConfig.put("key-pass", keyPass);
             }
@@ -349,8 +349,8 @@ public class UX {
         }
 
         if (readOnly) {
-            保存密码CheckBox.setEnabled(false);
-            保存密码CheckBox.setSelected(false);
+            SaveCB.setEnabled(false);
+            SaveCB.setSelected(false);
             channelBtn.setEnabled(false);
             channelPathTF.setEnabled(false);
 
@@ -451,10 +451,10 @@ public class UX {
         final JLabel label5 = new JLabel();
         label5.setText("输出apk/aab");
         panel1.add(label5, new GridConstraints(4, 0, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        保存密码CheckBox = new JCheckBox();
-        保存密码CheckBox.setSelected(true);
-        保存密码CheckBox.setText("保存密码");
-        panel1.add(保存密码CheckBox, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        SaveCB = new JCheckBox();
+        SaveCB.setSelected(true);
+        SaveCB.setText("保存密码");
+        panel1.add(SaveCB, new GridConstraints(3, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         ksPassPF = new JPasswordField();
         panel1.add(ksPassPF, new GridConstraints(2, 1, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
         channelPathTF = new JTextField();

@@ -27,7 +27,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.DataFormatException;
 
 public class SignWorker {
@@ -105,18 +107,40 @@ public class SignWorker {
                 apkName = apkName.substring("dx_unsigned_".length());
             }
             for (String channel : channelList) {
-                String safeName = String.format("%s_%s_sign.apk", apkName, channel)
-                        .replace('/', '_')
-                        .replace('\\', '_')
-                        .replace(' ', '_');
-                Path outPath = outDir.resolve(safeName);
-                log.info("正在输出渠道: {}", channel);
-                try {
-                    cb.build(channel, outPath);
-                    log.info("已经生成: {}", outPath);
-                }catch (Throwable e) {
-                    log.error("多渠道失败", e);
-                    return 1;
+                String[] split = channel.split(" ");
+                if (split.length == 3) {
+                    String safeName = String.format("%s_%s_sign.apk", apkName, split[1])
+                            .replace('/', '_')
+                            .replace('\\', '_')
+                            .replace(' ', '_');
+                    Path outPath = outDir.resolve(safeName);
+                    log.info("正在输出渠道: {}", split[1]);
+                    try {
+                        LinkedHashMap<String,String> channelMap = new LinkedHashMap<>();
+                        channelMap.put(split[0],split[2]);
+                        cb.build(channelMap, outPath);
+                        log.info("已经生成: {}", outPath);
+                    } catch (Throwable e) {
+                        log.error("多渠道失败", e);
+                        return 1;
+                    }
+                } else {
+                    String safeName = String.format("%s_%s_sign.apk", apkName, channel)
+                            .replace('/', '_')
+                            .replace('\\', '_')
+                            .replace(' ', '_');
+                    Path outPath = outDir.resolve(safeName);
+                    log.info("正在输出渠道: {}", channel);
+                    try {
+                        LinkedHashMap<String,String> map = new LinkedHashMap<>();
+                        map.put("UMENG_CHANNEL",channel);
+                        map.put("CHANNEL",channel);
+                        cb.build(map, outPath);
+                        log.info("已经生成: {}", outPath);
+                    } catch (Throwable e) {
+                        log.error("多渠道失败", e);
+                        return 1;
+                    }
                 }
             }
             log.info("多渠道完成: {}", outDir);

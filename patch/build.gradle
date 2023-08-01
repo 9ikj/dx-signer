@@ -3,21 +3,27 @@ plugins {
     id 'idea'
 }
 
-sourceCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+compileJava {
+    options.encoding = 'UTF-8'
+}
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compile fileTree(dir: 'lib', include: ['*.jar'])
-    compile group: 'org.ow2.asm', name: 'asm', version: '9.3'
+    implementation fileTree(dir: 'lib', include: ['*.jar'])
+    implementation group: 'org.ow2.asm', name: 'asm', version: '9.3'
 }
 
-task fatJar(type: Jar, dependsOn: jar) {
-    baseName = 'dx-patch'
+tasks.register('fatJar', Jar) {
+    dependsOn jar
+    archiveBaseName = 'dx-patch'
 
-    def deps = configurations.runtime
+    def deps = configurations.runtimeClasspath
 
     def depClasses = { deps.collect { it.isDirectory() ? it : zipTree(it) } }
 
