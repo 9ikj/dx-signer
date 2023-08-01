@@ -68,7 +68,7 @@ public class ChannelBuilder implements AutoCloseable {
 
     public static void updateUM(Axml axml, String keyValue) throws IOException {
         updateMeta(axml, "UMENG_CHANNEL", keyValue);
-        updateMeta(axml, "CHANNEL", keyValue);
+        // updateMeta(axml, "CHANNEL", keyValue);
     }
 
     private static void updateMeta(Axml axml, String keyName, String keyValue) {
