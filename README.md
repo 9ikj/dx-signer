@@ -22,7 +22,7 @@ java -jar dx-signer.jar
 ## 命令行界面
 
 ```bash
-java -jar dx-signer.apk sign [--option value]+
+java -jar dx-signer.jar sign [--option value]+
 ```
 
     您需要Java 8+的运行环境，推荐使用OpenJDK的实现。
@@ -52,20 +52,20 @@ java -jar dx-signer.apk sign [--option value]+
 ```bash
 
 # 使用etc/cfg.properties指定的参数进行签名
-java -jar dx-signer.apk sign --config etc/cfg.properties
+java -jar dx-signer.jar sign --config etc/cfg.properties
 
 # 使用etc/cfg.properties, 并使用keystore.properties里面的证书信息进行签名
-java -jar dx-signer.apk sign --config etc/cfg.properties --config keystore.properties
+java -jar dx-signer.jar sign --config etc/cfg.properties --config keystore.properties
 
 # 使用etc/cfg.properties指定的参数, 但是修改掉apk的输出路径
-java -jar dx-signer.apk sign --config etc/cfg.properties --out path/to/other/location.apk
+java -jar dx-signer.jar sign --config etc/cfg.properties --out path/to/other/location.apk
 
 # 不使用config进行签名
-java -jar dx-signer.apk sign --in in.apk --out signed.apk --ks keystore.JKS --ks-pass android
+java -jar dx-signer.jar sign --in in.apk --out signed.apk --ks keystore.JKS --ks-pass android
 
 # 多渠道
 mkdir -p out-apks
-java -jar dx-signer.apk sign --config keystore.properties \
+java -jar dx-signer.jar sign --config keystore.properties \
     --in in.apk --channel-list channel.txt \
     --out out-apks/
 
