@@ -379,12 +379,9 @@ public class UX {
         this.inputFileName = name;
         inPathTF.setText(file.getAbsolutePath());
 
-        String fileName = inputFileName;
-        if (fileName.startsWith("dx_unsigned")) {
-            fileName = "SIGNED" + fileName.substring("dx_unsigned".length());
-        } else {
-            fileName = "SIGNED-" + fileName;
-        }
+        int dot = inputFileName.lastIndexOf('.');
+        String apkName = dot > 0 ? inputFileName.substring(0, dot) : inputFileName;
+        String fileName = String.format("%s_sign.apk", apkName);
         File out = new File(file.getParent(), fileName);
         outPathTF.setText(out.toString());
     }

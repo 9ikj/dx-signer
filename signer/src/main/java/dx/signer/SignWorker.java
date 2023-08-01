@@ -105,7 +105,7 @@ public class SignWorker {
                 apkName = apkName.substring("dx_unsigned_".length());
             }
             for (String channel : channelList) {
-                String safeName = String.format("SIGNED_%s-%s.apk", apkName, channel)
+                String safeName = String.format("%s-%s_sign.apk", apkName, channel)
                         .replace('/', '_')
                         .replace('\\', '_')
                         .replace(' ', '_');
