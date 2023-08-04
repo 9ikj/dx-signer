@@ -26,6 +26,7 @@ import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileSystemView;
 import javax.swing.text.DefaultCaret;
 import java.awt.*;
 import java.io.BufferedWriter;
@@ -52,7 +53,7 @@ public class UX {
     private JButton signBtn;
     private JTextArea loggingTA;
     private JCheckBox SaveCB;
-    private JComboBox keyAliasCB;
+    private JComboBox<String> keyAliasCB;
     private JPasswordField keyPassPF;
     private JPasswordField ksPassPF;
     public JPanel top;
@@ -62,11 +63,8 @@ public class UX {
     private JCheckBox v1SigningEnabledCheckBox;
     private JCheckBox v2SigningEnabledCheckBox;
     private JList<String> ksList;
-
     private final DefaultListModel<String> ksListModel = new DefaultListModel<>();
-    private static final String cfg = "cfg.properties";
-
-
+    private static final String cfg = "cfg.properties"; //最后配置文件名
     private boolean readOnly = false;
     private String inputFileName = "";
 
@@ -106,12 +104,14 @@ public class UX {
 
 
     public UX() {
-        JFileChooser fileChooser = new JFileChooser();
+        JFileChooser fileChooser = new JFileChooser(FileSystemView.getFileSystemView());
         fileChooser.setCurrentDirectory(new File("."));
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
-
+        //app选择
         inBtn.addActionListener(e -> {
+            String appPath = inPathTF.getText();
+            setCurrentChoose(appPath, fileChooser);
             fileChooser.setFileFilter(new FileFilter() {
                 @Override
                 public boolean accept(File f) {
@@ -131,7 +131,10 @@ public class UX {
 
             }
         });
+        //ks选择
         ksBtn.addActionListener(e -> {
+            String ksPath = ksPathTF.getText();
+            setCurrentChoose(ksPath, fileChooser);
             fileChooser.setFileFilter(new FileFilter() {
                 @Override
                 public boolean accept(File f) {
@@ -150,8 +153,10 @@ public class UX {
                 ksPathTF.setText(file.getAbsolutePath());
             }
         });
-
+        // 渠道按钮
         channelBtn.addActionListener(e -> {
+            String channelPath = channelPathTF.getText();
+            setCurrentChoose(channelPath, fileChooser);
             fileChooser.setFileFilter(new FileFilter() {
                 @Override
                 public boolean accept(File f) {
@@ -170,7 +175,7 @@ public class UX {
                 channelPathTF.setText(file.getAbsolutePath());
             }
         });
-
+        // 签名按钮
         signBtn.addActionListener(e -> {
             String channelPath = channelPathTF.getText();
 
@@ -251,7 +256,7 @@ public class UX {
 
             Path ksPath = Paths.get(ksPath0);
             Path input = Paths.get(in);
-
+            //线程池
             es.submit(() -> {
                 try {
                     int result;
@@ -406,7 +411,7 @@ public class UX {
     }
 
     private void setInput(File file, String name) {
-        if (name == null || name.length() == 0) {
+        if (name == null || name.isEmpty()) {
             name = file.getName();
         }
         this.inputFileName = name;
@@ -419,6 +424,12 @@ public class UX {
         outPathTF.setText(out.toString());
     }
 
+    /**
+     * 获取配置文件
+     *
+     * @param fileName
+     * @return
+     */
     private static Path getConfigPath(String fileName) {
         Path HOME = Paths.get(".");
         Path configDir = HOME.resolve("etc");
@@ -433,6 +444,11 @@ public class UX {
         return configDir.resolve(fileName);
     }
 
+    /**
+     * 获取所有配置文件名
+     *
+     * @return
+     */
     private List<String> getConfigs() {
         List<String> list = new ArrayList<>();
         File[] files = getConfigPath(cfg).getParent().toFile().listFiles();
@@ -445,6 +461,25 @@ public class UX {
             }
         }
         return list;
+    }
+
+    /**
+     * 设置选择目录
+     *
+     * @param recentPath
+     * @param fileChooser
+     */
+    private void setCurrentChoose(String recentPath, JFileChooser fileChooser) {
+        try {
+            if (recentPath != null && !recentPath.isEmpty()) {
+                File parent = Paths.get(recentPath).getParent().toFile();
+                if (parent.exists()) {
+                    fileChooser.setCurrentDirectory(parent);
+                }
+            }
+        } catch (Exception ignored) {
+
+        }
     }
 
     {
@@ -512,22 +547,25 @@ public class UX {
         channelBtn = new JButton();
         channelBtn.setText("选择渠道清单");
         panel1.add(channelBtn, new GridConstraints(5, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label7 = new JLabel();
+        label7.setText("更多设置项请选择高级");
+        panel1.add(label7, new GridConstraints(3, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JPanel panel2 = new JPanel();
         panel2.setLayout(new GridLayoutManager(4, 4, new Insets(0, 0, 0, 0), -1, -1));
         tabbedPane1.addTab("高级", panel2);
         keyAliasCB = new JComboBox();
         panel2.add(keyAliasCB, new GridConstraints(1, 1, 1, 3, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
-        final JLabel label7 = new JLabel();
-        label7.setText("KeyAlias");
-        panel2.add(label7, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label8 = new JLabel();
+        label8.setText("KeyAlias");
+        panel2.add(label8, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         keyPassPF = new JPasswordField();
         panel2.add(keyPassPF, new GridConstraints(2, 1, 1, 3, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(150, -1), null, 0, false));
-        final JLabel label8 = new JLabel();
-        label8.setText("证书密码");
-        panel2.add(label8, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JLabel label9 = new JLabel();
-        label9.setText("如果您的Keystore包含多个证书，或者您的证书密码与Keystore密码不同, 请设置下列参数");
-        panel2.add(label9, new GridConstraints(0, 1, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        label9.setText("证书密码");
+        panel2.add(label9, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        final JLabel label10 = new JLabel();
+        label10.setText("如果您的Keystore包含多个证书，或者您的证书密码与Keystore密码不同, 请设置下列参数");
+        panel2.add(label10, new GridConstraints(0, 1, 1, 2, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         v2SigningEnabledCheckBox = new JCheckBox();
         v2SigningEnabledCheckBox.setEnabled(false);
         v2SigningEnabledCheckBox.setSelected(true);
@@ -560,6 +598,7 @@ public class UX {
         final JScrollPane scrollPane2 = new JScrollPane();
         top.add(scrollPane2, new GridConstraints(0, 1, 3, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         ksList = new JList();
+        ksList.setDropMode(DropMode.ON);
         final DefaultListModel defaultListModel1 = new DefaultListModel();
         ksList.setModel(defaultListModel1);
         ksList.setSelectionMode(1);
@@ -569,8 +608,9 @@ public class UX {
         label3.setLabelFor(ksPassPF);
         label4.setLabelFor(ksPassPF);
         label5.setLabelFor(outPathTF);
-        label7.setLabelFor(keyAliasCB);
-        label8.setLabelFor(keyPassPF);
+        label7.setLabelFor(ksPassPF);
+        label8.setLabelFor(keyAliasCB);
+        label9.setLabelFor(keyPassPF);
     }
 
     /**
