@@ -28,12 +28,15 @@ import javax.swing.event.PopupMenuListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.text.DefaultCaret;
 import java.awt.*;
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,6 +61,11 @@ public class UX {
     private JButton channelBtn;
     private JCheckBox v1SigningEnabledCheckBox;
     private JCheckBox v2SigningEnabledCheckBox;
+    private JList<String> ksList;
+
+    private final DefaultListModel<String> ksListModel = new DefaultListModel<>();
+    private static final String cfg = "cfg.properties";
+
 
     private boolean readOnly = false;
     private String inputFileName = "";
@@ -168,7 +176,7 @@ public class UX {
 
             String out = outPathTF.getText();
 
-            if (channelPath != null && channelPath.length() > 0) {
+            if (channelPath != null && !channelPath.isEmpty()) {
                 Path apkDir = CommandLine.detectOutDir(out);
                 if (Files.exists(apkDir)) {
                     if (JOptionPane.YES_OPTION != JOptionPane.showConfirmDialog(UX.this.top, "多渠道输出APK目录已经存在，是否覆盖:\n" + apkDir, "输出APK已经存在，是否覆盖", JOptionPane.OK_CANCEL_OPTION)) {
@@ -211,12 +219,22 @@ public class UX {
                 mConfig.put("ks-pass", ksPass);
                 mConfig.put("key-pass", keyPass);
             }
-
             if (!readOnly) {
                 try {
-                    Path configFile = getConfigPath();
+                    Path configFile = getConfigPath(cfg);
                     try (BufferedWriter r = Files.newBufferedWriter(configFile, StandardCharsets.UTF_8)) {
                         mConfig.store(r, "#");
+                    }
+                    File ks = new File(ksPath0);
+                    if (ks.exists()) {
+                        String name = ks.getName() + ".properties";
+                        Path ksConfigFile = getConfigPath(name);
+                        try (BufferedWriter r = Files.newBufferedWriter(ksConfigFile, StandardCharsets.UTF_8)) {
+                            mConfig.store(r, "#");
+                        }
+                        if (!ksListModel.contains(ks.getName())) {
+                            ksListModel.addElement(ks.getName());
+                        }
                     }
                 } catch (IOException ignore) {
                 }
@@ -238,7 +256,7 @@ public class UX {
                 try {
                     int result;
 
-                    if (channelPath != null && channelPath.length() > 0) {
+                    if (channelPath != null && !channelPath.isEmpty()) {
                         Path apkDir = CommandLine.detectOutDir(out);
                         result = SignWorker.signChannelApk(input, inputFileName,
                                 apkDir,
@@ -314,38 +332,22 @@ public class UX {
             }
         });
 
+        ksList.addListSelectionListener(e -> {
+            String ksName = ksList.getSelectedValue();
+            loadUIConfig(ksName + ".properties");
+        });
+
 
         DefaultCaret caret = (DefaultCaret) loggingTA.getCaret();
         caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 
         JTextAreaOutputStream.hijack(loggingTA);
 
-        try {
-            Path configFile = getConfigPath();
-            Properties initConfig = CommandLine.load(configFile);
+        loadUIConfig(cfg);
 
-            readOnly = "true".equals(initConfig.getProperty("config-read-only", ""));
-            ksPathTF.setText(initConfig.getProperty("ks", ""));
-
-            String inPath = initConfig.getProperty("in", "");
-            if (inPath.length() > 0) {
-                setInput(new File(inPath), initConfig.getProperty("in-filename", ""));
-            }
-            String outPath = initConfig.getProperty("out", "");
-            if (outPath.length() > 0) {
-                outPathTF.setText(outPath);
-            }
-            ksPassPF.setText(initConfig.getProperty("ks-pass", ""));
-            keyPassPF.setText(initConfig.getProperty("key-pass", ""));
-            channelPathTF.setText(initConfig.getProperty("channel-list", ""));
-
-            String s = initConfig.getProperty("ks-key-alias", "{{auto}}");
-            if (!s.equals("{{auto}}") && s.length() != 0) {
-                keyAliasCB.addItem(s);
-                keyAliasCB.setSelectedItem(s);
-            }
-
-        } catch (IOException ignore) {
+        ksList.setModel(ksListModel);
+        for (String config : getConfigs()) {
+            ksListModel.addElement(config);
         }
 
         if (readOnly) {
@@ -365,6 +367,37 @@ public class UX {
                 keyPassPF.setEnabled(false);
             }
             outPathTF.setEnabled(false);
+        }
+
+    }
+
+    private void loadUIConfig(String fileName) {
+        try {
+            Path configFile = getConfigPath(fileName);
+            Properties initConfig = CommandLine.load(configFile);
+
+            readOnly = "true".equals(initConfig.getProperty("config-read-only", ""));
+            ksPathTF.setText(initConfig.getProperty("ks", ""));
+
+            String inPath = initConfig.getProperty("in", "");
+            if (!inPath.isEmpty()) {
+                setInput(new File(inPath), initConfig.getProperty("in-filename", ""));
+            }
+            String outPath = initConfig.getProperty("out", "");
+            if (!outPath.isEmpty()) {
+                outPathTF.setText(outPath);
+            }
+            ksPassPF.setText(initConfig.getProperty("ks-pass", ""));
+            keyPassPF.setText(initConfig.getProperty("key-pass", ""));
+            channelPathTF.setText(initConfig.getProperty("channel-list", ""));
+
+            String s = initConfig.getProperty("ks-key-alias", "{{auto}}");
+            if (!s.equals("{{auto}}") && !s.isEmpty()) {
+                keyAliasCB.addItem(s);
+                keyAliasCB.setSelectedItem(s);
+            }
+
+        } catch (IOException ignore) {
         }
     }
 
@@ -386,7 +419,7 @@ public class UX {
         outPathTF.setText(out.toString());
     }
 
-    private static Path getConfigPath() {
+    private static Path getConfigPath(String fileName) {
         Path HOME = Paths.get(".");
         Path configDir = HOME.resolve("etc");
         if (!Files.exists(configDir)) {
@@ -397,7 +430,21 @@ public class UX {
             }
         }
 
-        return configDir.resolve("cfg.properties");
+        return configDir.resolve(fileName);
+    }
+
+    private List<String> getConfigs() {
+        List<String> list = new ArrayList<>();
+        File[] files = getConfigPath(cfg).getParent().toFile().listFiles();
+        if (files != null) {
+            for (File file : files) {
+                String s = file.getName();
+                if (s.contains(".ks") || s.contains(".keystore") || s.contains(".p12") || s.contains(".pfx") || s.contains(".jks")) {
+                    list.add(s.replace(".properties", ""));
+                }
+            }
+        }
+        return list;
     }
 
     {
@@ -416,7 +463,7 @@ public class UX {
      */
     private void $$$setupUI$$$() {
         top = new JPanel();
-        top.setLayout(new GridLayoutManager(3, 1, new Insets(5, 5, 5, 5), -1, -1));
+        top.setLayout(new GridLayoutManager(3, 2, new Insets(5, 5, 5, 5), -1, -1));
         tabbedPane1 = new JTabbedPane();
         top.add(tabbedPane1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 200), null, 0, false));
         final JPanel panel1 = new JPanel();
@@ -510,6 +557,13 @@ public class UX {
         loggingTA.setLineWrap(true);
         loggingTA.setText("   点击“4.签名”按钮开始签名...");
         scrollPane1.setViewportView(loggingTA);
+        final JScrollPane scrollPane2 = new JScrollPane();
+        top.add(scrollPane2, new GridConstraints(0, 1, 3, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        ksList = new JList();
+        final DefaultListModel defaultListModel1 = new DefaultListModel();
+        ksList.setModel(defaultListModel1);
+        ksList.setSelectionMode(1);
+        scrollPane2.setViewportView(ksList);
         label1.setLabelFor(inPathTF);
         label2.setLabelFor(ksPathTF);
         label3.setLabelFor(ksPassPF);
