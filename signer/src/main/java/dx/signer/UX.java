@@ -29,6 +29,8 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileSystemView;
 import javax.swing.text.DefaultCaret;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -108,6 +110,56 @@ public class UX {
         fileChooser.setCurrentDirectory(new File("."));
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(false);
+
+        TransferHandler mTransferHandler = new TransferHandler() {
+            @Override
+            public boolean importData(JComponent comp, Transferable t) {
+                try {
+                    Object data = t.getTransferData(DataFlavor.javaFileListFlavor);
+                    String filePath = data.toString();
+                    if (filePath.startsWith("[")) {
+                        filePath = filePath.substring(1);
+                    }
+                    if (filePath.endsWith("]")) {
+                        filePath = filePath.substring(0, filePath.length() - 1);
+                    }
+                    //apk
+                    if (comp == inPathTF && (filePath.endsWith(".apk") || filePath.endsWith(".aab"))) {
+                        inPathTF.setText(filePath);
+                        return true;
+                    }
+                    //密钥
+                    if (comp == ksPathTF && (filePath.endsWith(".ks") || filePath.endsWith(".keystore")
+                            || filePath.endsWith(".p12") || filePath.endsWith(".pfx") || filePath.endsWith(".jks"))) {
+                        ksPathTF.setText(filePath);
+                        return true;
+                    }
+                    //渠道列表
+                    if (comp == channelPathTF && (filePath.endsWith(".txt"))) {
+                        channelPathTF.setText(filePath);
+                        return true;
+                    }
+                    return false;
+                } catch (Exception e) {
+                    loggingTA.append("导入错误：" + e.getLocalizedMessage());
+                }
+                return false;
+            }
+
+            @Override
+            public boolean canImport(JComponent comp, DataFlavor[] flavors) {
+                for (DataFlavor flavor : flavors) {
+                    if (DataFlavor.javaFileListFlavor.equals(flavor)) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        };
+        inPathTF.setTransferHandler(mTransferHandler);
+        ksPathTF.setTransferHandler(mTransferHandler);
+        channelPathTF.setTransferHandler(mTransferHandler);
+
         //app选择
         inBtn.addActionListener(e -> {
             String appPath = inPathTF.getText();
