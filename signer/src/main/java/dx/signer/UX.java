@@ -125,7 +125,8 @@ public class UX {
                     }
                     //apk
                     if (comp == inPathTF && (filePath.endsWith(".apk") || filePath.endsWith(".aab"))) {
-                        inPathTF.setText(filePath);
+                        File file = new File(filePath);
+                        setInput(file);
                         return true;
                     }
                     //密钥
